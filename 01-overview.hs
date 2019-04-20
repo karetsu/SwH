@@ -17,15 +17,13 @@ module Chapter001 where
 -- all modules required by the below
 import Polynomial.Roots               -- dsp
 import Data.Complex                   -- base
-import Data.Random.Extras             -- random-extras
-import Data.Random.Shuffle.Weighted   -- random-extras
-import Data.Random.Source.Std
+import qualified Data.List as L
 import Data.Random
 import Numeric.LinearAlgebra.Data     -- hmatrix
-import Numeric.LinearAlgebra.HMatrix ( linearSolve
-                                     , eig
-                                     , Element)
+import Numeric.LinearAlgebra.HMatrix as M
 import System.Random
+import Test.QuickCheck (frequency, Gen, listOf)
+
 
 -- bubble sort ------------------------------------------------------------------
 
@@ -77,17 +75,16 @@ zeros = roots 1e-16 1000 [1,3,-10]
 -- TODO
 
 -- The setup:
-tvals :: [R]
-tvals = [0.5, 0.4, 0.1,
-         0.3, 0.2, 0.5,
-         0.5, 0.3, 0.2]
-
 transition :: Matrix R
-transition = matrix 3 tvals
+transition = (3><3)[0.5, 0.4, 0.1,
+                    0.3, 0.2, 0.5,
+                    0.5, 0.3, 0.2]
+
+data Weather = Fine | Cloudy | Rain deriving (Eq, Show)
 
 -- route 1:
 steadyState1 :: Int -> Matrix R -> Matrix R
-steadyState1 n t = foldl (<>) t [t | _ <- [1..n]]
+steadyState1 n t = foldl (M.<>) t [t | _ <- [1..n]]
 -- >>> disp 4 $ takeRows 1 (steadyState1 (100) transition)
 -- 1x3
 -- 0.4375  0.3125  0.2500
@@ -98,6 +95,9 @@ system = takeRows 2 (tr (transition - ident 3)) === matrix 3 [1,1,1]
 
 target :: Matrix R
 target = (3><1) [0,0,1 :: R]
+
+steadyState2 :: Maybe (Matrix R)
+steadyState2 = linearSolve system target
 -- >>> linearSolve system target
 -- Just (3><1)
 --  [ 0.4375
@@ -108,20 +108,44 @@ target = (3><1) [0,0,1 :: R]
 -- TODO
 
 -- route 4:
--- some kind of segue needed on random number generation
-getRow :: Element t => Int -> Matrix t -> Matrix t
-getRow n m = dropRows (n-1) $ takeRows n m
--- this is done considering matrices as 1 indexed
+-- this is absolutely not the best way to do it at all, but its an intuitive
+-- approach for those with little statistical training
 
-count :: Eq a => a -> [a] -> Int
-count x = length . filter (==x)
+-- replicate each rain type as many times it needs to be weighted as given,
+-- this is in order to sample with the correct probability
+genpop :: Matrix R -> Int -> [Weather]
+genpop t s = replicate (round (10*t!s!0) :: Int) Fine ++
+             replicate (round (10*t!s!1) :: Int) Cloudy ++
+             replicate (round (10*t!s!2) :: Int) Rain
 
-genState :: (MonadRandom m, Num a) => [(Double, a)] -> m [a]
-genState wp = runRVar (weightedSample 1 wp) StdRandom
+-- increment a count of each weather occurrence
+increment :: [Int] -> Weather -> [Int]
+increment [x,y,z] w = case w of
+                        Fine   -> [x+1,   y,   z]
+                        Cloudy -> [  x, y+1,   z]
+                        Rain   -> [  x,   y, z+1]
 
-steadyState4 :: [Double]
-steadyState4 = undefined
--- >>> weightedPop = zip [0.5, 0.4, 0.1] [1..3]
--- >>> runRVar (weightedSample 1 weightedPop) StdRandom
--- this part here does the actual sampling of the numbers based on their
--- weights, we need to go from that into the application on page 31 of the book
+wToInt :: Weather -> Int
+wToInt Fine   = 0
+wToInt Cloudy = 1
+wToInt Rain   = 2
+
+
+getNext :: Weather -> Int -> Weather
+getNext w n
+  | n == 0    = head $ (genpop transition .wToInt) w
+  | otherwise = head $ drop (n-1) (take n $ (genpop transition . wToInt) w)
+
+-- our pattern now becomes like:
+-- getNext 3 (getNext 1 (getNext 4 (getNext 8 Fine)))
+
+-- because we are now dealing with random numbers we have to move to IO town
+steadyState4 :: Int -> Weather -> IO [Int]
+steadyState4 n start = do
+  g <- newStdGen
+  let xs = take n $ randomRs (0, 9) g
+  let states = init $ scanl getNext start xs
+  let scores = foldl increment [0,0,0] states
+  return scores
+-- incorrect, result is about [0.54, 0.32, 0.14]
+-- FIXME
