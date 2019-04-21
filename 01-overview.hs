@@ -17,6 +17,7 @@ module Chapter001 where
 -- all modules required by the below
 import Polynomial.Roots               -- dsp
 import Data.Complex                   -- base
+import Data.Function
 import qualified Data.List as L
 import Data.Random
 import Numeric.LinearAlgebra.Data     -- hmatrix
@@ -70,7 +71,6 @@ zeros = roots 1e-16 1000 [1,3,-10]
 -- 2. solve the system of eqns: pi P = pi and sum_i=1^3 pi_i = 1
 -- 3. using Perron-Frobenius theorem that eigenvector for the largest eval is
 --    proportional to pi, so we find it and normalise it
--- TODO
 -- 4. running a Monte Carlo simulation
 -- TODO
 
@@ -79,6 +79,9 @@ transition :: Matrix R
 transition = (3><3)[0.5, 0.4, 0.1,
                     0.3, 0.2, 0.5,
                     0.5, 0.3, 0.2]
+
+transition' :: Matrix R
+transition' = M.tr transition
 
 data Weather = Fine | Cloudy | Rain deriving (Eq, Show)
 
@@ -130,22 +133,28 @@ wToInt Fine   = 0
 wToInt Cloudy = 1
 wToInt Rain   = 2
 
-
 getNext :: Weather -> Int -> Weather
 getNext w n
-  | n == 0    = head $ (genpop transition .wToInt) w
+  | n == 0    = head $ (genpop transition . wToInt) w
   | otherwise = head $ drop (n-1) (take n $ (genpop transition . wToInt) w)
 
 -- our pattern now becomes like:
 -- getNext 3 (getNext 1 (getNext 4 (getNext 8 Fine)))
 
 -- because we are now dealing with random numbers we have to move to IO town
-steadyState4 :: Int -> Weather -> IO [Int]
+steadyState4 :: Int -> Weather -> IO [Double]
 steadyState4 n start = do
   g <- newStdGen
   let xs = take n $ randomRs (0, 9) g
   let states = init $ scanl getNext start xs
   let scores = foldl increment [0,0,0] states
-  return scores
--- incorrect, result is about [0.54, 0.32, 0.14]
+  let scores' = [(fromIntegral x)/(fromIntegral n) | x <- scores]
+  return scores'
+-- incorrect, result is about [0.54, 0.32, 0.14] as of now
 -- FIXME
+-- >>> steadyState4 1000000 Cloudy
+-- [0.535009,0.321368,0.143623]
+-- notice how we only need to go into IO when we are using the random numbers
+-- and that the rest of this can be written in terms of pure functions. The
+-- implementation here is not even close to optimal, we'll worry about making
+-- things working in a better way later on
