@@ -1,4 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
 {-
 NOTE: Throughout this entire codebase I will be making use of Dante's REPLoid
       functionality. This is the emacs plugin I use under hlissner's doom emacs
@@ -11,19 +10,16 @@ NOTE: Throughout this entire codebase I will be making use of Dante's REPLoid
 module Chapter001 where
 
 
--- this is all pretty meh, figure out minimum needed later
-
-
 -- all modules required by the below
 import Polynomial.Roots               -- dsp
 import Data.Complex                   -- base
-import Data.Function
+-- import Data.Function
 import qualified Data.List as L
-import Data.Random
+import Data.Ord
+-- import Data.Random
 import Numeric.LinearAlgebra.Data     -- hmatrix
 import Numeric.LinearAlgebra.HMatrix as M
 import System.Random
-import Test.QuickCheck (frequency, Gen, listOf)
 
 
 -- bubble sort ------------------------------------------------------------------
@@ -57,9 +53,7 @@ bubbleSort xs = bubbleSort' xs 0
 -- bit 'odd' to many as the output format is x :+ y for x + iy
 zeros :: RealFloat a => [Complex a]
 zeros = roots 1e-16 1000 [1,3,-10]
--- all the hard work here is done for us, and all we need to do is then use
--- zeros as we see fit :)
--- note that this uses Laguerre's method by default
+-- note that this uses Laguerre's method
 -- >>> zeros
 -- [0.5 :+ 0.0,(-0.2) :+ 0.0]
 
@@ -72,7 +66,6 @@ zeros = roots 1e-16 1000 [1,3,-10]
 -- 3. using Perron-Frobenius theorem that eigenvector for the largest eval is
 --    proportional to pi, so we find it and normalise it
 -- 4. running a Monte Carlo simulation
--- TODO
 
 -- The setup:
 transition :: Matrix R
@@ -80,17 +73,18 @@ transition = (3><3)[0.5, 0.4, 0.1,
                     0.3, 0.2, 0.5,
                     0.5, 0.3, 0.2]
 
-transition' :: Matrix R
-transition' = M.tr transition
-
 data Weather = Fine | Cloudy | Rain deriving (Eq, Show)
 
 -- route 1:
-steadyState1 :: Int -> Matrix R -> Matrix R
-steadyState1 n t = foldl (M.<>) t [t | _ <- [1..n]]
--- >>> disp 4 $ takeRows 1 (steadyState1 (100) transition)
+steadyState1 :: Matrix R
+steadyState1 = M.takeRows 1 $ foldl (M.<>) t [t | _ <- [1..n]]
+  where
+    n = 10^6
+    t = transition
+-- >>> disp 4 steadyState1
 -- 1x3
 -- 0.4375  0.3125  0.2500
+
 
 -- route 2:
 system :: Matrix R
@@ -101,14 +95,37 @@ target = (3><1) [0,0,1 :: R]
 
 steadyState2 :: Maybe (Matrix R)
 steadyState2 = linearSolve system target
--- >>> linearSolve system target
+-- >>> steadyState2
 -- Just (3><1)
 --  [ 0.4375
 --  , 0.3125
 --  ,   0.25 ]
 
+
 -- route 3:
--- TODO
+evals :: Vector (Complex Double)
+evecs :: Matrix (Complex Double)
+(evals, evecs) = eig (M.tr transition)
+
+sizes :: [R]
+sizes = map M.magnitude (toList evals)
+
+maxid :: (Ord a, Num a, Enum a) => [a] -> (a, Int)
+maxid xs = L.maximumBy (comparing fst) (zip xs [0..])
+
+getEvec :: Matrix (Complex Double)
+getEvec = M.dropColumns m $ M.takeColumns (m+1) evecs
+  where
+    m = snd $ maxid sizes
+
+steadyState3 :: Matrix (Complex Double)
+steadyState3 = getEvec / scalar (M.sumElements getEvec)
+-- >>> disp 4 steadyState3
+-- (3><1)
+--  [ 0.43749999999999994 :+ 0.0
+--  , 0.31250000000000006 :+ 0.0
+--  , 0.24999999999999997 :+ 0.0 ]
+
 
 -- route 4:
 -- this is absolutely not the best way to do it at all, but its an intuitive
@@ -151,7 +168,7 @@ steadyState4 n start = do
   let scores' = [(fromIntegral x)/(fromIntegral n) | x <- scores]
   return scores'
 -- incorrect, result is about [0.54, 0.32, 0.14] as of now
--- FIXME
+-- FIXME: come back to it later
 -- >>> steadyState4 1000000 Cloudy
 -- [0.535009,0.321368,0.143623]
 -- notice how we only need to go into IO when we are using the random numbers
