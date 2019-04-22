@@ -9,17 +9,25 @@ NOTE: Throughout this entire codebase I will be making use of Dante's REPLoid
 -}
 module Chapter001 where
 
-
 -- all modules required by the below
 import Polynomial.Roots               -- dsp
 import Data.Complex                   -- base
--- import Data.Function
 import qualified Data.List as L
 import Data.Ord
--- import Data.Random
 import Numeric.LinearAlgebra.Data     -- hmatrix
-import Numeric.LinearAlgebra.HMatrix as M
+import qualified Numeric.LinearAlgebra.HMatrix as M
 import System.Random
+
+-- web interface and json
+import Network.Wreq
+import Control.Lens
+
+import Data.Aeson
+import Data.Aeson.Lens
+
+import qualified Data.Text as T
+import qualified Data.ByteString.Lazy.Internal as B
+-- TODO: tidy this up, will be using Aeson for parsing json later :)
 
 
 -- bubble sort ------------------------------------------------------------------
@@ -175,3 +183,14 @@ steadyState4 n start = do
 -- and that the rest of this can be written in terms of pure functions. The
 -- implementation here is not even close to optimal, we'll worry about making
 -- things working in a better way later on
+
+
+-- web interface, json and string parsing ---------------------------------------
+url :: String
+url = "https://ocw.mit.edu/ans7870/6/6.006/s08/lecturenotes/files/t8.shakespeare.txt"
+
+query :: IO (Maybe B.ByteString)
+query = do
+    r <- getWith defaults url
+    return $ r ^? responseBody
+
