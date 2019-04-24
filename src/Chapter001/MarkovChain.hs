@@ -50,7 +50,7 @@ target :: Matrix R
 target = (3><1) [0,0,1 :: R]
 
 steadyState2 :: Maybe (Matrix R)
-steadyState2 = linearSolve system target
+steadyState2 = M.linearSolve system target
 -- >>> steadyState2
 -- Just (3><1)
 --  [ 0.4375
@@ -61,7 +61,7 @@ steadyState2 = linearSolve system target
 -- route 3:
 evals :: Vector (Complex Double)
 evecs :: Matrix (Complex Double)
-(evals, evecs) = eig (M.tr transition)
+(evals, evecs) = M.eig (M.tr transition)
 
 sizes :: [R]
 sizes = map M.magnitude (toList evals)
@@ -115,13 +115,13 @@ getNext w n
 -- getNext 3 (getNext 1 (getNext 4 (getNext 8 Fine)))
 
 -- because we are now dealing with random numbers we have to move to IO town
-steadyState4 :: Int -> Weather -> IO [Double]
-steadyState4 n start = do
+steadyState4' :: Int -> Weather -> IO [Double]
+steadyState4' n start = do
   g <- newStdGen
   let xs = take n $ randomRs (0, 9) g
   let states = init $ scanl getNext start xs
   let scores = foldl increment [0,0,0] states
-  let scores' = [(fromIntegral x)/(fromIntegral n) | x <- scores]
+  let scores' = [fromIntegral x / fromIntegral n | x <- scores]
   return scores'
 -- incorrect, result is about [0.54, 0.32, 0.14] as of now
 -- FIXME: come back to it later
@@ -131,3 +131,5 @@ steadyState4 n start = do
 -- and that the rest of this can be written in terms of pure functions. The
 -- implementation here is not even close to optimal, we'll worry about making
 -- things working in a better way later on
+steadyState4 :: IO [Double]
+steadyState4 = steadyState4' (10^6) Fine
