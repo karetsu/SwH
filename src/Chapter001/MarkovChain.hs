@@ -1,5 +1,4 @@
--- |
-
+-- | Markov chain weather change simulations
 module Chapter001.MarkovChain ( steadyState1
                               , steadyState2
                               , steadyState3
@@ -100,6 +99,8 @@ increment [x,y,z] w = case w of
                         Fine   -> [x+1,   y,   z]
                         Cloudy -> [  x, y+1,   z]
                         Rain   -> [  x,   y, z+1]
+increment _ _ = []  -- don't care about errors because I know this works
+
 
 wToInt :: Weather -> Int
 wToInt Fine   = 0
@@ -116,10 +117,11 @@ getNext w n = head . drop n . genpop transition . wToInt $ w
 steadyState4' :: Int -> IO [Double]
 steadyState4' n = do
   g <- newStdGen
-  let steps = take n $ randomRs (0, 9) g
-  let states = init (scanl getNext Fine steps)
-  let scores = foldl increment [0,0,0] states
   let scores' = [fromIntegral x / fromIntegral n | x <- scores]
+        where
+          scores = L.foldl' increment [0,0,0] states
+          states = init (L.scanl' getNext Fine steps)
+          steps = take n $ randomRs (0, 9) g
   return scores'
 
 steadyState4 :: IO [Double]

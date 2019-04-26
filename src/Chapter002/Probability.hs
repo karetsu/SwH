@@ -35,3 +35,6 @@ rollTwo = do
   print $ evenDiceT 6
   putStr "Monte Carlo estimate: "
   evenDiceMC (10^6) 6
+
+-- Partially matching passwords -------------------------------------------------
+
