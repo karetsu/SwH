@@ -107,29 +107,20 @@ wToInt Cloudy = 1
 wToInt Rain   = 2
 
 getNext :: Weather -> Int -> Weather
-getNext w n
-  | n == 0    = head $ (genpop transition . wToInt) w
-  | otherwise = head $ drop (n-1) (take n $ (genpop transition . wToInt) w)
+getNext w n = head . drop n . genpop transition . wToInt $ w
 
 -- our pattern now becomes like:
 -- getNext 3 (getNext 1 (getNext 4 (getNext 8 Fine)))
 
 -- because we are now dealing with random numbers we have to move to IO town
-steadyState4' :: Int -> Weather -> IO [Double]
-steadyState4' n start = do
+steadyState4' :: Int -> IO [Double]
+steadyState4' n = do
   g <- newStdGen
-  let xs = take n $ randomRs (0, 9) g
-  let states = init $ scanl getNext start xs
+  let steps = take n $ randomRs (0, 9) g
+  let states = init (scanl getNext Fine steps)
   let scores = foldl increment [0,0,0] states
   let scores' = [fromIntegral x / fromIntegral n | x <- scores]
   return scores'
--- incorrect, result is about [0.54, 0.32, 0.14] as of now
--- FIXME: come back to it later
--- >>> steadyState4 1000000 Cloudy
--- [0.535009,0.321368,0.143623]
--- notice how we only need to go into IO when we are using the random numbers
--- and that the rest of this can be written in terms of pure functions. The
--- implementation here is not even close to optimal, we'll worry about making
--- things working in a better way later on
+
 steadyState4 :: IO [Double]
-steadyState4 = steadyState4' (10^6) Fine
+steadyState4 = steadyState4' (10^6)

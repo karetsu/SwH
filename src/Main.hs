@@ -13,11 +13,11 @@ import Chapter001.BubbleSort
 import Chapter001.Roots
 import Chapter001.MarkovChain
 
-
 lineBreak :: String
 lineBreak = concat ["#" | _ <- [1..80]]
 
 
+-- | Introduction to haskell
 chapter001 :: IO ()
 chapter001 = do
   putStrLn lineBreak
