@@ -40,6 +40,7 @@ rollTwo = do
   putStr "Monte Carlo estimate: "
   evenDiceMC (10^6) 6
 
+
 -- Partially matching passwords -------------------------------------------------
 password :: String
 password = "3xyZu4vN"
@@ -57,10 +58,8 @@ matchExists' n = 1 - factorial
   where
     factorial = fromIntegral (product [365,364..(365-n+1)]) / (365^n)
 
-
 matchedSim :: Ord a => [a] -> Int
 matchedSim xs = if xs == nub xs then 0 else 1
-
 
 matchExistsMC :: Int  -- number of people
               -> Int  -- number of simulations
