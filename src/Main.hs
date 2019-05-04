@@ -22,7 +22,7 @@ chapter001 :: IO ()
 chapter001 = do
   putStrLn lineBreak
   putStr "Bubble sorting [1,7,34,6,5,3,67,8,4,10]: "
-  print $ bubbleSort [1,7,34,6,5,3,67,8,4,10]
+  print $ bubbleSort ([1,7,34,6,5,3,67,8,4,10]::[Int])
   putStr "Roots of 1 + 3x - 10x^2: "
   print zeros
   putStrLn lineBreak

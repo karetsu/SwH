@@ -1,12 +1,16 @@
--- |
+-- | probabilistic stuffs
 
 module Chapter002.Probability where
 
 -- we will mostly be doing Monte Carlo simulations for this module
-import System.Random
+import Control.Applicative (liftA3)
+import Control.Monad (replicateM)
+import Control.Monad.Trans.State
 
 import Data.List (nub)
 import Data.List.Split (chunksOf)
+
+import System.Random
 
 
 -- Dice even sum ----------------------------------------------------------------
@@ -27,9 +31,9 @@ evenDiceMC :: Int    -- number of simulations to run
 evenDiceMC n f = do
   g <- newStdGen
   let values = take (2*n) $ randomRs (1,f) g
-  let numerator = length $ filter even [ uncurry (+) x
+      numerator = length $ filter even [ uncurry (+) x
                                        | x <- zip (take n values) (drop n values)]
-  let estimate = fromIntegral numerator / fromIntegral n
+      estimate = fromIntegral numerator / fromIntegral n
   return estimate
 
 -- wrapping them up together because that's what happens in the book
@@ -67,5 +71,60 @@ matchExistsMC :: Int  -- number of people
 matchExistsMC n s = do
   g <- newStdGen
   let days = chunksOf n (take (n*s) (randomRs (1,365) g)::[Int])
-  let count = (sum . map matchedSim) days
+      count = (sum . map matchedSim) days
   return $ fromIntegral count / fromIntegral s
+
+
+-- Sampling with and without replacement ----------------------------------------
+
+-- We have 7 fish in a pond
+data Fish = Gold | Silver deriving (Show, Enum, Bounded, Eq)
+instance Random Fish where
+  randomR (a, b) g = case randomR (fromEnum a, fromEnum b) g of
+    (x, g') -> (toEnum x, g')
+  random = randomR (minBound, maxBound)
+
+fishPop :: [Fish]
+fishPop = [Gold, Gold, Gold, Silver, Silver, Silver, Silver]
+
+-- the aim is to have two different scenarios, one where we fish 4 with
+-- replacement, the other where we fish 4 w.out replacement
+
+pond :: Int -> Fish
+pond x
+  | x < 4 = Gold
+  | otherwise = Silver  -- here will only ever be applied to int <= 7
+
+
+-- with replacement
+fishingS :: Int -> State StdGen [Fish]
+fishingS n = replicateM n (pond <$> state (randomR (1,7)))
+
+fishing :: Int -> StdGen -> [Fish]
+fishing n g = evalState (fishingS n) g
+
+release4 :: IO [Fish]
+release4 = (fishing 4) . mkStdGen <$> randomIO
+
+
+-- without replacement
+remFish :: Eq a => a -> [a] -> [a]
+remFish _ [] = []
+remFish f (x:xs) | f == x    = xs
+                 | otherwise = x : remFish f xs
+
+fishing' :: Int -> [Fish] -> StdGen -> [Fish]
+fishing' n fs g = go n fs [] g
+  where
+    go :: Int -> [Fish] -> [Fish] -> StdGen -> [Fish]
+    go catch fishes fished gen
+      | catch > length fishes = fishes
+      | catch < 0 = fished
+      | otherwise =
+        let
+          (fish, nextGen) = randomR (1, length fishes) gen
+          caught = pond fish
+        in go (catch-1) (remFish caught fishes) (caught : fished) nextGen
+
+capture4 :: IO [Fish]
+capture4 = (fishing' 3 fishPop) . mkStdGen <$> randomIO

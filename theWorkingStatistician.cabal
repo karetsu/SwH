@@ -36,13 +36,17 @@ executable tws
                 aeson >= 1.4.2.0,
                 base >=4.12 && <4.13,
                 bytestring >= 0.10.8.2,
+                containers >= 0.6.0.1,
                 dsp,
                 hmatrix,
                 lens,
                 lens-aeson,
+                mwc-random >= 0.14.0.0,
+                primitive >= 0.6.4.0,
                 random,
                 split >= 0.2.3.3,
                 text >= 1.2.3.1,
+                transformers >= 0.5.6.2,
                 wreq
   ghc-options:
               -O2

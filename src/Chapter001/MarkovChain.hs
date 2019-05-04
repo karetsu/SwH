@@ -99,7 +99,7 @@ increment [x,y,z] w = case w of
                         Fine   -> [x+1,   y,   z]
                         Cloudy -> [  x, y+1,   z]
                         Rain   -> [  x,   y, z+1]
-increment _ _ = []  -- don't care about errors because I know this works
+increment xs _ = error $ "Needed a [x, y, z], got: " ++ show xs
 
 
 wToInt :: Weather -> Int
