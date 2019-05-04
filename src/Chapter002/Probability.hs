@@ -3,8 +3,7 @@
 module Chapter002.Probability where
 
 -- we will mostly be doing Monte Carlo simulations for this module
-import Control.Applicative (liftA3)
-import Control.Monad (replicateM)
+import Control.Monad (replicateM,liftM)
 import Control.Monad.Trans.State
 
 import Data.List (nub)
@@ -52,27 +51,31 @@ password = "3xyZu4vN"
 
 
 -- The birthday problem ---------------------------------------------------------
-matchExists :: Int -> Float
-matchExists n = 1 - product fractions
+match :: Int -> Float
+match n = 1 - product fractions
   where
     fractions = [fromIntegral k / 365 | k <- [365,364..(365-n+1)]]
 
-matchExists' :: Int -> Float
-matchExists' n = 1 - factorial
+match' :: Int -> Float
+match' n = 1 - factorial
   where
     factorial = fromIntegral (product [365,364..(365-n+1)]) / (365^n)
 
-matchedSim :: Ord a => [a] -> Int
-matchedSim xs = if xs == nub xs then 0 else 1
+matches :: Ord a => [a] -> Int
+matches xs = if xs == nub xs then 0 else 1
 
-matchExistsMC :: Int  -- number of people
-              -> Int  -- number of simulations
-              -> IO Double
-matchExistsMC n s = do
-  g <- newStdGen
-  let days = chunksOf n (take (n*s) (randomRs (1,365) g)::[Int])
-      count = (sum . map matchedSim) days
-  return $ fromIntegral count / fromIntegral s
+makeDays :: Int -> StdGen -> [Int]
+makeDays n = evalState (replicateM n (state $ randomR (1,365)))
+
+matchExistsMC :: Int -> Int -> Double
+matchExistsMC n s = fromIntegral (go n s 0) / fromIntegral s
+  where
+    go :: Int -> Int -> Int -> Int
+    go people sims count
+      | sims < 0 = count
+      | otherwise =
+        let days = makeDays 23 (mkStdGen sims)  -- is this ok?
+        in go people (sims - 1) (count + matches days)
 
 
 -- Sampling with and without replacement ----------------------------------------
