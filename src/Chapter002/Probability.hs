@@ -1,14 +1,10 @@
 -- | probabilistic stuffs
-
 module Chapter002.Probability where
 
 -- we will mostly be doing Monte Carlo simulations for this module
-import Control.Monad (replicateM,liftM)
+import Control.Monad (replicateM)
 import Control.Monad.Trans.State
-
 import Data.List (nub)
-import Data.List.Split (chunksOf)
-
 import System.Random
 
 
@@ -67,8 +63,8 @@ matches xs = if xs == nub xs then 0 else 1
 makeDays :: Int -> StdGen -> [Int]
 makeDays n = evalState (replicateM n (state $ randomR (1,365)))
 
-matchExistsMC :: Int -> Int -> Double
-matchExistsMC n s = fromIntegral (go n s 0) / fromIntegral s
+matchMC :: Int -> Int -> Double
+matchMC n s = fromIntegral (go n s 0) / fromIntegral s
   where
     go :: Int -> Int -> Int -> Int
     go people sims count
@@ -104,10 +100,10 @@ fishingS :: Int -> State StdGen [Fish]
 fishingS n = replicateM n (pond <$> state (randomR (1,7)))
 
 fishing :: Int -> StdGen -> [Fish]
-fishing n g = evalState (fishingS n) g
+fishing n = evalState (fishingS n)
 
 release4 :: IO [Fish]
-release4 = (fishing 4) . mkStdGen <$> randomIO
+release4 = fishing 4 . mkStdGen <$> randomIO
 
 
 -- without replacement
@@ -117,7 +113,7 @@ remFish f (x:xs) | f == x    = xs
                  | otherwise = x : remFish f xs
 
 fishing' :: Int -> [Fish] -> StdGen -> [Fish]
-fishing' n fs g = go n fs [] g
+fishing' n fs = go n fs []
   where
     go :: Int -> [Fish] -> [Fish] -> StdGen -> [Fish]
     go catch fishes fished gen
@@ -130,4 +126,4 @@ fishing' n fs g = go n fs [] g
         in go (catch-1) (remFish caught fishes) (caught : fished) nextGen
 
 capture4 :: IO [Fish]
-capture4 = (fishing' 3 fishPop) . mkStdGen <$> randomIO
+capture4 = fishing' 3 fishPop . mkStdGen <$> randomIO
