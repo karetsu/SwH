@@ -5,6 +5,7 @@ module Chapter002.Probability where
 import Control.Monad (replicateM)
 import Control.Monad.Trans.State
 import Data.List (nub)
+import Data.Ratio (Rational)
 import System.Random
 
 
@@ -34,9 +35,8 @@ evenDiceMC n f = do
 -- wrapping them up together because that's what happens in the book
 rollTwo :: IO Double
 rollTwo = do
-  putStr "Theoretical value: "
-  print $ evenDiceT 6
-  putStr "Monte Carlo estimate: "
+  putStrLn $ "Theoretical: " ++ show (evenDiceT 6)
+  putStr "Estimate: "
   evenDiceMC (10^6) 6
 
 
@@ -44,7 +44,7 @@ rollTwo = do
 password :: String
 password = "3xyZu4vN"
 -- TODO
-
+-- M-g M-g 53
 
 -- The birthday problem ---------------------------------------------------------
 match :: Int -> Float
@@ -127,3 +127,35 @@ fishing' n fs = go n fs []
 
 capture4 :: IO [Fish]
 capture4 = fishing' 3 fishPop . mkStdGen <$> randomIO
+
+
+-- Lattice paths ----------------------------------------------------------------
+-- the aim is to count the number of possible moves (0,0) -> (5,5) which stay
+-- above the diagonal
+
+-- total number of possible paths 2n `choose``
+paths :: Integer -> Integer
+paths n = product [(n+1) .. (2*n)] `div` product [2..n]
+
+-- tail recursive n choose k
+choose :: Integer -> Integer -> Integer
+choose = go 1 1
+  where
+    go an ak _ 0 = an `div` ak
+    go _  _  0 _ = 0
+    go an ak n k = go (an*n) (ak*k) (n-1) (k-1)
+
+-- nth Catalan number
+catalan :: Integer -> Integer
+catalan n = (2*n) `choose` n - (2*n) `choose` (n-1)
+
+uppers :: Integer -> Double
+uppers n = numerator / denominator
+  where
+    numerator = fromIntegral $ catalan n
+    denominator = fromIntegral $ paths n
+
+-- ok, so now the theoretical version is calculated, we want to run all
+-- possible simulations and count the number for which they stay above
+-- the diagonal, this will not really even be that large for reasonably
+-- large n

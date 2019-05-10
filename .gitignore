@@ -1,7 +1,8 @@
 # directories
-dist
+dist*
 
 # wildcards
 *.o
 *.hi
 *.pdf
+.ghc.*
