@@ -2,10 +2,10 @@
 module Chapter002.Probability where
 
 -- we will mostly be doing Monte Carlo simulations for this module
-import Control.Monad (replicateM)
+import Control.Monad
 import Control.Monad.Trans.State
 import Data.List (nub)
-import Data.Ratio (Rational)
+import Data.Maybe (catMaybes)
 import System.Random
 
 
@@ -159,3 +159,35 @@ uppers n = numerator / denominator
 -- possible simulations and count the number for which they stay above
 -- the diagonal, this will not really even be that large for reasonably
 -- large n
+data Step = U | R deriving (Show, Eq)
+-- using U and R for up and right to avoid clashes with Either
+
+-- award for funnest way to generate all combinations of n values from a list
+allcom :: Int -> Int -> [[Step]]
+allcom n m = [n+m] >>= (`replicateM` [U,R])
+
+numOccur :: Eq a => a -> [a] -> Int
+numOccur x = length . filter (==x)
+
+genPaths :: Int -> Int -> [[Step]] -> [[Step]]
+genPaths n m = filter (\xs -> numOccur U xs == n && numOccur R xs == m)
+
+stepToInt :: Step -> Int
+stepToInt U = 1
+stepToInt R = -1
+
+isUpper :: [Int] -> Maybe [Int]
+isUpper xs = if all (>=0) $ scanl (+) (head xs) (tail xs) then Just xs else Nothing
+
+latticePaths :: Int -> Int -> [[Int]]
+latticePaths n m = (map . map) stepToInt (genPaths n m (allcom n m))
+
+uppers' :: Int -> Double
+uppers' n = numerator / denominator
+  where
+    numerator = fromIntegral $ length . catMaybes $ map isUpper (latticePaths n n)
+    denominator = fromIntegral $ length (latticePaths n n)
+-- TODO: this is horrible once you get beyond about 9x9 lattices and this is
+--       the point after which we cross 1GB RAM usage (although it only takes 1s on
+--       my PC, change this into an accumulator which counts the uppers vs all and
+--       then does the division)
