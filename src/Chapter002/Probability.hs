@@ -191,3 +191,12 @@ uppers' n = numerator / denominator
 --       the point after which we cross 1GB RAM usage (although it only takes 1s on
 --       my PC, change this into an accumulator which counts the uppers vs all and
 --       then does the division)
+
+-- finally a more monte carlo approach which simply counts whether you hit the
+-- north or each boundary first, the aim being to improve on the overhead of the
+-- above simulation which enumerates every case and we can repeat this new approach
+-- a large number of times inexpensively
+
+-- generate a step, see if it takes the path to the boundary, add one to the
+-- upper accumulator if it never went below horizontal otherwise add to count
+-- TODO: plot out the steps on paper to implement
