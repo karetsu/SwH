@@ -1,0 +1,1 @@
+Any improvements to and optimisations of the existing code is welcomed. PRs with things not yet tackled from the book will be ignored in favour of my own version, these PRs may later be incorporated if they improve on my implementations.
