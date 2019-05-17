@@ -96,17 +96,6 @@ brute = undefined
 shuffleMatched :: [Int] -> Int
 shuffleMatched xs = toInt $ zipWith (==) xs [1..]
 
-
--- seeing whether having a termintation early makes a difference
-shuffleMatched' :: [Int] -> Int
-shuffleMatched' [] = 1
-shuffleMatched' (x:xs) = go x xs 1
-  where
-    go :: Int -> [Int] -> Int -> Int
-    go y [] step = if y == step then 0 else 1
-    go y ys step = if y == step then 0 else go (head ys) (tail ys) (step+1)
-
-
 envMC' :: Int     -- number of envelopes
       -> Int     -- number of iterations
       -> StdGen  -- random number generator
