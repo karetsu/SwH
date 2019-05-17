@@ -2,8 +2,6 @@
 
 module Chapter002.Sets where
 
-import Control.Monad (liftM)
-
 import Data.Set (Set)
 import qualified Data.Set as S
 
@@ -12,6 +10,8 @@ import Data.List (permutations)
 import System.Random
 import System.Random.Shuffle (shuffle')
 
+
+-- Basic set operations ---------------------------------------------------------
 setA :: Set Int
 setA = S.fromList [2,7,2,3]
 
@@ -38,7 +38,7 @@ subsets = ( symdiffAB `S.isSubsetOf` unionAB
           , intersectAB `S.isSubsetOf` unionAB)
 
 
--- The probability of a union
+-- The probability of a union ---------------------------------------------------
 setC :: Set Char
 setC = S.fromList "aeiou"
 
@@ -71,35 +71,38 @@ correctElem n = probMC n . mkStdGen <$> randomIO
 -- different sets
 
 
--- Secretary with envelopes
+-- Secretary with envelopes -----------------------------------------------------
 factorial :: Integer -> Integer
 factorial n = product [1..n]
-
-analytic :: Double
-analytic = 1.0 / exp 1
 
 toInt :: [Bool] -> Int
 toInt xs = if True `elem` xs then 0 else 1
 
+shuffleMatched :: [Int] -> Int
+shuffleMatched xs = toInt $ zipWith (==) xs [1..]
 
--- breaks when factorial k overflows Int, hence use of Integer
+-- approach 1: by formula
 formulaic :: Integer -> Double
 formulaic n = sum series
   where
     series = [ fromIntegral ((-1)^k :: Integer) / fromIntegral (factorial k)
              | k <- [0..n]]
 
+-- approach 2: by brute force
 brute :: Int -> Double
-brute = undefined
+brute n = fromIntegral numerator / fromIntegral (product [1..n])
+  where
+    numerator = sum $ shuffleMatched <$> permutations [1..n]
 
+-- approach 3: analytic solution
+analytic :: Double
+analytic = 1.0 / exp 1
 
-shuffleMatched :: [Int] -> Int
-shuffleMatched xs = toInt $ zipWith (==) xs [1..]
-
+-- approach 4: monte carlo approximation
 envMC' :: Int     -- number of envelopes
-      -> Int     -- number of iterations
-      -> StdGen  -- random number generator
-      -> Double  -- probability all miss
+       -> Int     -- number of iterations
+       -> StdGen  -- random number generator
+       -> Double  -- probability all miss
 envMC' n n' g = fromIntegral (go n n' 0 g) / fromIntegral n'
   where
     go :: Int -> Int -> Int -> StdGen -> Int
