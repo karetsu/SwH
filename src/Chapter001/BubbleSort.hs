@@ -1,4 +1,5 @@
--- |
+-- | classic bubblesort but in haskell
+-- | funSort is a version which doesn't require calculating the length (for fun)
 
 module Chapter001.BubbleSort (bubbleSort) where
 
@@ -24,3 +25,9 @@ bubbleSort xs = bubbleSort' xs 0
 -- >>> bubbleSort [1,10,5,3,9,1,1,1,0,15]
 -- [0,1,1,1,1,3,5,9,10,15]
 
+noLength :: (Ord a, Eq b) => [a] -> [b] -> [a]
+noLength xs []     = xs
+noLength xs (_:is) = noLength (singleSort xs) is
+
+funSort :: (Ord a, Eq a) => [a] -> [a]
+funSort xs = noLength xs xs
