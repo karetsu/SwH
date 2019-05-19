@@ -11,8 +11,8 @@ import Data.Monoid (mconcat)
 import System.Random
 import System.Random.Shuffle (shuffle')
 
--- Useful function
-(./) :: (Num a, Integral a) => a -> a -> Double
+-- Useful functions -------------------------------------------------------------
+(./) :: (Integral a, Integral b, Fractional c) => a -> b -> c
 n ./ m = fromIntegral n / fromIntegral m
 
 
@@ -196,14 +196,13 @@ independent n = intersect n . prob13 n . mkStdGen <$> randomIO
 
 
 -- Conditional probability ------------------------------------------------------
-intDiv :: [Int] -> Double
-intDiv [x,y] = x ./ y
-intDiv _ = 1
+(@/) :: (Integer, Integer) -> Double
+(@/) = uncurry (./)
 
 zeta :: Int  -- truncate
      -> Int  -- s
      -> Double
-zeta t s = sum $ uncurry (./) <$> take t [(1, n^s) | n <- [1..]]
+zeta t s = sum $ (@/) <$> take t [(1, n^s) | n <- [1..]]
 
 -- for our purposes we will truncate at n=2000
 zeta' :: Int -> Double
