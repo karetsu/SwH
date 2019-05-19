@@ -11,6 +11,10 @@ import Data.Monoid (mconcat)
 import System.Random
 import System.Random.Shuffle (shuffle')
 
+-- Useful function
+(./) :: (Num a, Integral a) => a -> a -> Double
+n ./ m = fromIntegral n / fromIntegral m
+
 
 -- Basic set operations ---------------------------------------------------------
 setA :: Set Int
@@ -55,7 +59,7 @@ matched :: Char -> Int
 matched s = if s `elem` setC || s `elem` setD then 1 else 0
 
 probMC :: Int -> StdGen -> Double
-probMC n g = fromIntegral (go n 0 g) / fromIntegral n
+probMC n g = go n 0 g ./ n
   where
     go :: Int -> Int -> StdGen -> Int
     go count agg gen
@@ -86,12 +90,12 @@ shuffleMatched xs = toInt $ zipWith (==) xs [1..]
 formulaic :: Integer -> Double
 formulaic n = sum series
   where
-    series = [ fromIntegral ((-1)^k :: Integer) / fromIntegral (factorial k)
+    series = [ ((-1)^k :: Integer) ./ factorial k
              | k <- [0..n]]
 
 -- approach 2: by brute force
 brute :: Int -> Double
-brute n = fromIntegral numerator / fromIntegral (product [1..n])
+brute n = numerator ./ product [1..n]
   where
     numerator = sum $ shuffleMatched <$> permutations [1..n]
 
@@ -104,7 +108,7 @@ envMC' :: Int     -- number of envelopes
        -> Int     -- number of iterations
        -> StdGen  -- random number generator
        -> Double  -- probability all miss
-envMC' n n' g = fromIntegral (go n n' 0 g) / fromIntegral n'
+envMC' n n' g = go n n' 0 g ./ n'
   where
     go :: Int -> Int -> Int -> StdGen -> Int
     go envs sims acc gen
@@ -127,7 +131,7 @@ occAnalytic n r = sum [ term1 k * fromIntegral (term2 n k) * term3 n r k
   where
     term1 k = (-1)^k
     term2 x y = product [1+x-y..n] `div` product [1..y]
-    term3 x y k = (1.0 - (fromIntegral k / fromIntegral x)) ** fromIntegral y
+    term3 x y k = (1.0 - k ./ x) ** fromIntegral y
 
 throw :: Eq a => a -> [a] -> [a]
 throw _ [] = []
@@ -150,7 +154,7 @@ allFull [] = 1
 allFull _  = 0
 
 occMC :: Int -> Int -> Int -> StdGen -> Double
-occMC n r k g = fromIntegral (go n r k 0 g) / fromIntegral k
+occMC n r k g = go n r k 0 g ./ k
   where
     go :: Int -> Int -> Int -> Int -> StdGen -> Int
     go slots picks sims acc gen
@@ -159,3 +163,72 @@ occMC n r k g = fromIntegral (go n r k 0 g) / fromIntegral k
       = let nGen = snd (next gen)
         in go slots picks (sims-1)
               (acc + allFull (throwRandom [1..slots] picks gen)) nGen
+
+-- Independent events -----------------------------------------------------------
+-- we will show that randomly picking 13 from 10..25 and prob first digit is 1
+-- & prob second digit is 3 are not independent of each other.
+
+prob13 :: Int -> StdGen -> [Double]
+prob13 n g = (./ n) <$> go n 0 0 0 g
+  where
+    go :: Int -> Int -> Int -> Int -> StdGen -> [Int]
+    go sims acc13 acc1x accX3 gen
+      | sims == 0 = [acc13, acc1x, accX3]
+      | otherwise = let
+          x :: Int
+          (x, ngen) = randomR (10, 23) gen
+          found13 = if x == 13 then 1 else 0
+          found1x = if x `div` 10 == 1 then 1 else 0
+          foundX3 = if x `rem` 10 == 3 then 1 else 0
+        in
+          go (sims-1)
+             (acc13 + found13)
+             (acc1x + found1x)
+             (accX3 + foundX3)
+             ngen
+
+intersect :: Int -> [Double] -> Bool
+intersect n [x,y,z] = x == (y*z / fromIntegral n)
+intersect _ _ = False
+
+independent :: Int -> IO Bool
+independent n = intersect n . prob13 n . mkStdGen <$> randomIO
+
+
+-- Conditional probability ------------------------------------------------------
+intDiv :: [Int] -> Double
+intDiv [x,y] = x ./ y
+intDiv _ = 1
+
+zeta :: Int  -- truncate
+     -> Int  -- s
+     -> Double
+zeta t s = sum $ uncurry (./) <$> take t [(1, n^s) | n <- [1..]]
+
+-- for our purposes we will truncate at n=2000
+zeta' :: Int -> Double
+zeta' = zeta 2000
+
+-- well manufactured example M-g M-g 78
+{-
+A manufactoring process is sensitive to the number of dust particles in the
+environment. Assume:
+
+P(A|B_k) = 1 - 1/(k+1)
+where
+B_k is the probability of k dust particles in the room.
+
+P(B_k) = 6 / (pi^2 (k+1)^2)
+
+After a bit of faffing (Basel problem included) we end up at P(A) being the
+limit as n-> infty of sum_k P(A|B_k)P(B_k) which neatly reduces to:
+
+(pi^2 - 6 zeta(3))/pi^2
+
+Technically an application of the Law of Total Probability
+-}
+manFailureAn :: Double
+manFailureAn = (pi**2 - 6* zeta' 3) / pi**2
+
+
+-- Bayes' Rule ------------------------------------------------------------------
