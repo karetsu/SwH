@@ -1,5 +1,7 @@
-# Haskell for the Working Statistician
+# Statistics with Haskell
 
-I've tasked myself with learning Julia so I can use it in work - its much easier to request than Haskell. To do this I am working through the very good [Statistics with Julia](https://people.smp.uq.edu.au/YoniNazarathy/julia-stats/StatisticsWithJulia.pdf) and will be trying to do the tasks in parallel in Haskell so that I don't forget everything I already think I know.
+Initially I will just be throwing some horrific looking code in here, without a care for making it safe and tested. That's not what this is for in the first instance. When I'm done I will go back through it and tidy everything up by optimising some implementations and making it 'better' generally. 
 
-The book is excellent so far and I would recommend buying it once its published. I know I will. 
+PRs welcome should you wish to improve what has already been written but I want to implement all of it myself at least once so any PRs for material not yet covered will be delayed until I pass that point.
+
+This README will eventually morph into a document with more info.
