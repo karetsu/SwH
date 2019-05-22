@@ -196,13 +196,13 @@ independent n = intersect n . prob13 n . mkStdGen <$> randomIO
 
 
 -- Conditional probability ------------------------------------------------------
-(@/) :: (Integer, Integer) -> Double
+(@/) :: (Integral a, Integral b, Fractional c) => (a,b) -> c
 (@/) = uncurry (./)
 
 zeta :: Int  -- truncate
      -> Int  -- s
      -> Double
-zeta t s = sum $ (@/) <$> take t [(1, n^s) | n <- [1..]]
+zeta t s = sum $ uncurry (./) <$> take t [(1, n^s) | n <- [1..]]
 
 -- for our purposes we will truncate at n=2000
 zeta' :: Int -> Double
@@ -231,3 +231,56 @@ manFailureAn = (pi**2 - 6* zeta' 3) / pi**2
 
 
 -- Bayes' Rule ------------------------------------------------------------------
+
+-- false 1 (true 0)
+ep0 :: Double
+ep0 = 0.1
+
+-- false 0 (true 1)
+ep1 :: Double
+ep1 = 0.05
+
+bayesAn :: Double
+bayesAn = 0.7 * (1-ep1) / (0.7*(1-ep1) + 0.3*ep0)
+
+flipBit :: Int -> Int
+flipBit 0 = 1
+flipBit _ = 0
+
+genStream :: StdGen -> [Int]
+genStream g = let (bit, ngen) = randomR (0,10) g in go bit : genStream ngen
+  where
+    go :: Int -> Int
+    go x = if x < 7 then 1 else 0
+
+tx :: Int -> StdGen -> [Int]
+tx n g = take n $ genStream g
+
+rx :: [Int] -> StdGen -> [Int]
+rx []     _ = []
+rx (x:xs) g =
+  let (prob, ngen) = randomR (0.0, 1.0) g  in go x prob : rx xs ngen
+  where
+    go :: Int -> Double -> Int
+    go bit chance
+      | bit == 0 && chance < ep0 = 1
+      | bit == 1 && chance < ep1 = 0
+      | otherwise                = x
+
+cleanRate :: Int -> StdGen -> Double
+cleanRate n g = numerator ./ denominator
+  where
+    ts = tx n g
+    rs = rx ts g
+    numerator = length $ filter (== True) (zipWith (==) ts rs)
+    denominator = length rs
+
+txrxBayes :: Int -> IO Double
+txrxBayes n = cleanRate n . mkStdGen <$> randomIO
+
+
+-- Monty Hall -------------------------------------------------------------------
+reveal :: Int -> Int -> StdGen -> Int
+reveal guess prize gen
+  | guess == prize = undefined -- get random element from the set with prize removed
+  | otherwise      = undefined -- pick the door which is not the prize
