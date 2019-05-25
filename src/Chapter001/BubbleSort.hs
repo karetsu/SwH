@@ -1,7 +1,7 @@
 -- | classic bubblesort but in haskell
 -- | funSort is a version which doesn't require calculating the length (for fun)
 
-module Chapter001.BubbleSort (bubbleSort) where
+module Chapter001.BubbleSort (bubbleSort, funSort) where
 
 -- first create a function which knows how to sort through the list once
 singleSort :: Ord a => [a] -> [a]

@@ -98,12 +98,28 @@ txrxBayes n = cleanRate n . mkStdGen <$> randomIO
 
 
 -- Monty Hall -------------------------------------------------------------------
-data Door = One | Two | Three deriving (Eq, Ord, Show)
+data Door = One | Two | Three deriving (Eq, Bounded, Enum, Ord, Show)
+instance Random Door where
+  randomR (a, b) g = case randomR (fromEnum a, fromEnum b) g of
+    (x, g') -> (toEnum x, g')
+  random = randomR (minBound, maxBound)
 
 game :: Set Door
 game = S.fromList [One, Two, Three]
 
-reveal :: Door -> Door -> StdGen -> Int
+genPrize :: StdGen -> Door
+genPrize g = S.elemAt r game
+  where
+    (r,_) = randomR (0,2) g
+
+
+reveal :: Door -> Door -> StdGen -> Door
 reveal guess prize gen
-  | guess == prize = undefined -- get random element from the set with prize removed
-  | otherwise      = undefined -- pick the door which is not the prize
+  | guess == prize = S.elemAt r $ game S.\\ S.singleton prize
+  | otherwise      = S.elemAt 0 $ game S.\\ S.fromList [guess, prize]
+  where
+    (r,_) = randomR (0,1) gen
+
+{- get 3 doors >> pick one as the prize >> player makes guess
+               >> door revealed         >> player makes choice
+               >> prize revealed -}
