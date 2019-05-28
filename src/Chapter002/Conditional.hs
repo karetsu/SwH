@@ -48,12 +48,6 @@ manFailureAn :: Double
 manFailureAn = (pi**2 - 6* zeta' 3) / pi**2
 
 
--- Bayes' Rule ------------------------------------------------------------------
-
--- false 1 (true 0)
-ep0 :: Double
-ep0 = 0.1
-
 -- false 0 (true 1)
 ep1 :: Double
 ep1 = 0.05
