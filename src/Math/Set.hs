@@ -1,6 +1,6 @@
 -- | Working with sets, chapter 2.2
 
-module Chapter002.Sets where
+module Math.Set where
 
 import Data.Set (Set)
 import qualified Data.Set as S

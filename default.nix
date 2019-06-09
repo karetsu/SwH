@@ -10,7 +10,7 @@ in
     swh = drv;
     swh-shell = haskellPackages.shellFor {
       packages = p: [drv];
-      buildInputs = with pkgs; [ cabal-install hlint ];
+      buildInputs = with pkgs; [ pkgconfig openblas cabal-install hlint ];
     };
   }
- 
+

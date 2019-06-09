@@ -1,5 +1,5 @@
 -- | probabilistic stuffs
-module Chapter002.Probability where
+module Statistics.Probability.Probability where
 
 -- we will mostly be doing Monte Carlo simulations for this module
 import Control.Monad

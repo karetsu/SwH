@@ -1,17 +1,20 @@
 -- | Markov chain weather change simulations
-module Chapter001.MarkovChain ( steadyState1
-                              , steadyState2
-                              , steadyState3
-                              , steadyState4
-                              ) where
+module Statistics.MarkovChain.MarkovChain 
+  ( steadyState1
+  , steadyState2
+  , steadyState3
+  , steadyState4
+  ) where
 
 -- all modules required by the below
 import Data.Complex                   -- base
-import qualified Data.List as L
 import Data.Ord
 import Numeric.LinearAlgebra.Data     -- hmatrix
-import qualified Numeric.LinearAlgebra.HMatrix as M
 import System.Random
+
+import qualified Data.List as L
+import qualified Numeric.LinearAlgebra.HMatrix as M
+
 
 -- steady state of Markov chain -------------------------------------------------
 -- we will write 4 approaches

@@ -1,6 +1,6 @@
 -- | Chapter 3.1: M-g M-g 85
 
-module RandomVariables where
+module Statistics.Distributions.RandomVariables where
 
 import Data.List (group, sort)
 import System.Random

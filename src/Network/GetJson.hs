@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 -- | Simple GET and parse of test and JSON
-module Chapter001.Network where
+module Network.GetJson where
 
 -- web interface and json
 import Network.Wreq

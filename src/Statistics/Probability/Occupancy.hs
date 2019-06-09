@@ -1,6 +1,6 @@
 -- |
 
-module Chapter002.Occupancy where
+module Statistics.Probability.Occupancy where
 
 import System.Random
 

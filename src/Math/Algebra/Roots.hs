@@ -1,6 +1,6 @@
 -- |
 
-module Chapter001.Roots (zeros) where
+module Math.Algebra.Roots (zeros) where
 
 import Data.Complex
 import Polynomial.Roots

@@ -1,6 +1,6 @@
 -- | Conditional probability
 
-module Chapter002.Conditional where
+module Statistics.Probability.Conditional where
 
 
 import Data.Set (Set)
@@ -49,6 +49,9 @@ manFailureAn = (pi**2 - 6* zeta' 3) / pi**2
 
 
 -- false 0 (true 1)
+ep0 :: Double
+ep0 = 0.1
+
 ep1 :: Double
 ep1 = 0.05
 
